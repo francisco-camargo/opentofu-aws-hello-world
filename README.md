@@ -135,16 +135,33 @@ Create an SSH key pair that will allow you to securely connect to the EC2 instan
 #### **Generate SSH Key Pair**
 
 ```bash
-aws ec2 create-key-pair --key-name ec2-key --query 'KeyMaterial' --output text > ec2-key.pem
+aws ec2 create-key-pair --key-name ec2-key --query 'KeyMaterial' --output text --profile <sso profile> > ec2-key.pem
 ```
+
+**Note:** Replace `<sso profile>` with the actual profile name you configured during the SSO setup.
 
 #### **Set Key Permissions** (Windows)
 
 This secures the private key file with proper permissions - only your user account can read it. This is required for SSH clients to accept the key.
 
+**In Git Bash/MINGW64:**
+
+```bash
+icacls ec2-key.pem /inheritance:r
+icacls ec2-key.pem /grant:r "$USERNAME":"(R)"
+```
+
+**In PowerShell:**
+
 ```powershell
 icacls ec2-key.pem /inheritance:r
 icacls ec2-key.pem /grant:r "%USERNAME%":"(R)"
+```
+
+**Alternative method (works in any terminal):**
+
+```bash
+chmod 400 ec2-key.pem
 ```
 
 ## OpenTofu Infrastructure-as-Code
