@@ -140,6 +140,8 @@ aws ec2 create-key-pair --key-name ec2-key --query 'KeyMaterial' --output text -
 
 **Note:** Replace `<sso profile>` with the actual profile name you configured during the SSO setup.
 
+**Important:** The key pair name in AWS will be `ec2-key` (without .pem), but the local file is saved as `ec2-key.pem`. In your `terraform.tfvars` file, use just `ec2-key` for the `key_name` variable, not `ec2-key.pem`.
+
 #### **Set Key Permissions** (Windows)
 
 This secures the private key file with proper permissions - only your user account can read it. This is required for SSH clients to accept the key.
@@ -220,6 +222,8 @@ OpenTofu roadmap to get an EC2 instance running:
 5. **Custom Values (terraform.tfvars)**
 
     Contains the specific values for variables defined in variables.tf. This is where you set your preferred region, instance size, SSH key name, and most importantly, your actual public IP address for secure SSH access. **This file is NOT committed to the repository** (excluded by .gitignore) because it contains personalized and potentially sensitive information like your public IP address. You should customize the values in this file to match your specific requirements and security needs.
+
+    **Key naming:** Make sure the `key_name` in `terraform.tfvars` matches the key pair name you created in AWS (e.g., `ec2-key`), not the filename (e.g., `ec2-key.pem`).
 
 **Important**: The `terraform.tfvars` file should contain different values from the defaults in `variables.tf`. For example:
 
