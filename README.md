@@ -179,13 +179,23 @@ OpenTofu roadmap to get an EC2 instance running:
 
 1. **Provider Configuration (provider.tf)**
 
+    This file configures the AWS provider for OpenTofu, specifying which AWS region to deploy resources in and how to authenticate. It sets up the connection between OpenTofu and your AWS account.
+
 2. **Main Resources (main.tf)**
+
+    The core infrastructure file that defines your AWS resources. For this project, it includes the EC2 instance configuration and a security group that allows SSH access. This is where you define the actual cloud resources you want to create.
 
 3. **Variables (variables.tf)**
 
+    Defines input variables that make your configuration flexible and reusable. This file declares variables like region, AMI ID, instance type, and SSH key name, allowing you to customize your deployment without changing the core resource definitions.
+
 4. **Outputs (outputs.tf)**
 
+    Specifies values to be displayed after OpenTofu applies your configuration. This file will define outputs like the instance's public IP address and a ready-to-use SSH command, making it easier to connect to your newly created instance.
+
 5. **Custom Values (terraform.tfvars)**
+
+    Contains the specific values for variables defined in variables.tf. This is where you set your preferred region, instance size, and other parameters. Keeping these values separate from your resource definitions allows for easier customization.
 
 ### Phase 3: Deployment
 
