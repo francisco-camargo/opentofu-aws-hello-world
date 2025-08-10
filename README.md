@@ -334,6 +334,43 @@ This approach allows you to safely share infrastructure code while keeping sensi
     ssh -i ec2-key.pem ec2-user@<public_ip>
     ```
 
+    **Finding connection information:**
+
+    The public IP and other instance details are automatically stored in the `terraform.tfstate` file, which is created in the `tofu` directory after running `tofu apply`. This state file contains the current state of all your infrastructure resources. You can also view the outputs by running:
+
+    ```bash
+    tofu output
+    ```
+
+    This will display the formatted outputs including the ready-to-use SSH command.
+
+    **Troubleshooting SSH connection issues:**
+
+    If you get a "Connection timed out" error when trying to SSH:
+
+    1. **Check your security group configuration** - Ensure your `terraform.tfvars` has the correct `allowed_ssh_cidr` value:
+
+       ```hcl
+       allowed_ssh_cidr = "YOUR_PUBLIC_IP/32"
+       ```
+
+       Find your public IP at [whatismyipaddress.com](https://whatismyipaddress.com)
+
+    2. **Verify the instance is running** - Check the AWS console or run:
+
+       ```bash
+       aws ec2 describe-instances --instance-ids <instance-id> --profile <sso profile>
+       ```
+
+    3. **Wait for instance initialization** - New instances can take a few minutes to fully boot and accept connections
+
+    4. **Update security group if needed** - If you need to change the allowed IP, update `terraform.tfvars` and run:
+
+       ```bash
+       tofu plan
+       tofu apply
+       ```
+
 ### Phase 4: Cleanup
 
 When you're done experimenting, destroy the resources to avoid unnecessary charges:
