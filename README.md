@@ -166,6 +166,8 @@ icacls ec2-key.pem /grant:r "%USERNAME%":"(R)"
 chmod 400 ec2-key.pem
 ```
 
+**⚠️ CRITICAL SECURITY WARNING**: Never share or expose your private SSH key contents. If a private key is compromised (shared in chat, committed to public repositories, etc.), it must be immediately deleted and replaced. Private keys provide direct access to your servers and should be treated as highly sensitive credentials.
+
 ## OpenTofu Infrastructure-as-Code
 
 OpenTofu roadmap to get an EC2 instance running:
@@ -380,6 +382,22 @@ tofu destroy
 ```
 
 Type `yes` when prompted to confirm.
+
+**Optional: Complete cleanup (if you want to start fresh)**
+
+If you need to delete SSH keys due to security concerns or want to completely clean up:
+
+```bash
+# Delete the key pair from AWS
+aws ec2 delete-key-pair --key-name ec2-key --profile <sso profile>
+
+# Delete local SSH key files
+rm ec2-key.pem
+# or if you created a new secure key:
+rm secure-ec2-key.pem
+```
+
+**Note:** Only run these commands if you're certain you no longer need the SSH keys. If you accidentally exposed your private key (e.g., committed it to version control), you should immediately delete and recreate your keys for security.
 
 ## Next Steps
 
