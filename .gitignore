@@ -28,3 +28,6 @@ terraform.rc
 
 # Exclude all .tfplan files
 *.tfplan
+
+# Environment variables
+.env
