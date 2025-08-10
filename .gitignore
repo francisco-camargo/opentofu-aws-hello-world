@@ -26,8 +26,5 @@ terraform.rc
 *.pem
 *.key
 
-# Exclude all .tfplan files
-*.tfplan
-
-# Environment variables
-.env
+# Exclude all plan files
+*tfplan
