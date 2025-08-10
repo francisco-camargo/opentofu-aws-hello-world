@@ -1,5 +1,9 @@
 # OpenTofu Hello World on AWS
 
+## Goal
+
+A minimal guide on how to use OpenTofu to provision an EC2 instance on AWS.
+
 ## **Set up AWS**
 
 ### **AWS CLI**
@@ -63,10 +67,12 @@ aws --version
    }
    ```
 
-   This permission set provides:- Full EC2 management for PyTorch containers
+   This permission set provides:
+   - Full EC2 management capabilities
    - S3 access for OpenTofu state files
    - Minimum IAM permissions for EC2 operation
    - Load balancing capabilities if needed
+
 5. **Configure the permission set**:
 
     - Name: `EC2-OpenTofu-Access`
@@ -122,16 +128,14 @@ aws sts get-caller-identity --profile <sso profile>
 
 - Create or use existing Access Key ID and Secret Access Key
 
-### **SSH Credentials**
+### Step 8: SSH Credentials
 
-Now that AWS authentication is configured, we need to prepare the SSH credentials that will allow us to securely connect to EC2 instances we'll create later. These steps create and secure the SSH key pair that OpenTofu will use when provisioning EC2 instances.
+Create an SSH key pair that will allow you to securely connect to the EC2 instance we'll create with OpenTofu.
 
 #### **Generate SSH Key Pair**
 
-This creates an AWS-managed SSH key pair and downloads the private key file locally. You'll need this to SSH into any EC2 instances created by OpenTofu.
-
 ```bash
-aws ec2 create-key-pair --key-name pytorch-key --query 'KeyMaterial' --output text > pytorch-key.pem
+aws ec2 create-key-pair --key-name ec2-key --query 'KeyMaterial' --output text > ec2-key.pem
 ```
 
 #### **Set Key Permissions** (Windows)
@@ -139,8 +143,8 @@ aws ec2 create-key-pair --key-name pytorch-key --query 'KeyMaterial' --output te
 This secures the private key file with proper permissions - only your user account can read it. This is required for SSH clients to accept the key.
 
 ```powershell
-icacls pytorch-key.pem /inheritance:r
-icacls pytorch-key.pem /grant:r "%USERNAME%":"(R)"
+icacls ec2-key.pem /inheritance:r
+icacls ec2-key.pem /grant:r "%USERNAME%":"(R)"
 ```
 
 ## OpenTofu Infrastructure-as-Code
@@ -156,110 +160,85 @@ OpenTofu roadmap to get an EC2 instance running:
     winget install --exact --id=OpenTofu.Tofu
     ```
 
-    restart the terminal, then it should run in bash and powershell.
+    Restart the terminal, then verify the installation:
 
     ```bash
     tofu -version
     ```
 
-2. **Create Provider Configuration**
-    Create a new file `provider.tf`:
+2. **Create Project Structure**
 
-    ```hcl
-    provider "aws" {
-    region = "us-east-1"  # or your preferred region
-    }
+    Create these files in your project directory:
+    - `provider.tf` - AWS provider configuration
+    - `main.tf` - EC2 instance definition
+    - `variables.tf` - Customizable parameters
+    - `outputs.tf` - Output values like IP address
+    - `terraform.tfvars` - Your specific variable values
+
+### Phase 2: Write Configuration Files
+
+1. **Provider Configuration (provider.tf)**
+
+2. **Main Resources (main.tf)**
+
+3. **Variables (variables.tf)**
+
+4. **Outputs (outputs.tf)**
+
+5. **Custom Values (terraform.tfvars)**
+
+### Phase 3: Deployment
+
+1. **Initialize OpenTofu**
+
+    This downloads required providers and modules:
+
+    ```bash
+    tofu init
     ```
 
-### Phase 2: Infrastructure Definition
+2. **Plan Deployment**
 
-1. **Create main.tf** - define EC2 instance, security group, key pair
-2. **Create variables.tf** - parameterize instance type, region, etc.
-3. **Create outputs.tf** - export instance IP, connection details
-4. **Create terraform.tfvars** - set your specific values
+    Preview what will be created:
 
-### Phase 3: AWS Prerequisites
+    ```bash
+    tofu plan
+    ```
 
-1. **Generate SSH key pair** for connecting to instance
-2. **Verify AWS credentials** have EC2 permissions
-3. **Choose AWS region** and availability zone
+3. **Apply Configuration**
 
-### Phase 4: Deployment
+    Create the resources:
 
-1. **Initialize OpenTofu** (`tofu init`)
-2. **Plan deployment** (`tofu plan`) - preview what will be created
-3. **Apply configuration** (`tofu apply`) - create actual resources
-4. **Test SSH connection** to your new instance
+    ```bash
+    tofu apply
+    ```
 
-### Phase 5: Setup Development Environment
+    Type `yes` when prompted to confirm.
 
-1. **SSH into instance** and install Docker
-2. **Clone your PyTorch repo** on the instance
-3. **Configure VSCode SSH** to connect to the instance
-4. **Test your container** runs on the cloud instance
+4. **Connect to Your Instance**
 
-## VSCode Integration
+    After successful deployment, use the SSH command from the outputs:
 
-**Dev Containers extension**:
+    ```bash
+    ssh -i ec2-key.pem ec2-user@<public_ip>
+    ```
 
-- `.devcontainer/devcontainer.json` configures the remote connection
-- VSCode attaches to running container
-- Full IntelliSense, debugging, terminal access inside container
-- Extensions (Python, PyTorch snippets) installed in container
+### Phase 4: Cleanup
 
-## Dependencies (Minimal Set)
+When you're done experimenting, destroy the resources to avoid unnecessary charges:
 
-**CPU-optimized libraries**:
+```bash
+tofu destroy
+```
 
-- PyTorch CPU version + torchvision
-- numpy (with optimized BLAS)
-- matplotlib (basics)
-- tqdm (progress bars)
-- tensorboard (simple logging)
+Type `yes` when prompted to confirm.
 
-## Development Workflow
+## Next Steps
 
-1. **Build container** with all dependencies pre-installed
-2. **Start container** (standard Docker, no GPU runtime needed)
-3. **VSCode connects** via Dev Containers extension
-4. **Code directly** in container environment
-5. **Run training** with simple `python scripts/train.py`
+Once you're comfortable with this basic setup, you can explore:
 
-## CPU Optimization
-
-**Docker Configuration**:
-
-- Standard Docker Desktop on Windows
-- CPU resource allocation (cores/memory)
-- No special runtime requirements
-- Faster startup than GPU containers
-
-## Minimal Neural Network
-
-**Simple CNN example**:
-
-- Basic PyTorch model (lightweight for CPU)
-- MNIST dataset (smaller, faster on CPU)
-- Reduced batch sizes for CPU efficiency
-- CPU utilization monitoring
-- Threading optimization for Windows containers
-
-## Windows-Specific Considerations
-
-**Docker Desktop**:
-
-- WSL2 backend recommended
-- Memory allocation for container
-- File system performance (avoid bind mounts for dependencies)
-- Port forwarding for any web interfaces
-
-This approach gives you:
-
-- **No GPU dependencies** (works on any Windows machine)
-- **Fast container startup** (no CUDA runtime)
-- **Full VSCode experience** with remote development
-- **CPU-optimized PyTorch** for reasonable performance
-- **Simple setup** on Windows Docker Desktop
-- **Reproducible environment** across any CPU-based machine
-
-The key advantage is simplicity - standard Docker setup with no special hardware requirements, while still maintaining professional development practices.
+- Adding more EC2 configuration options
+- Setting up autoscaling groups
+- Creating a proper networking setup with VPC and subnets
+- Implementing remote state storage in S3
+- Adding state locking with DynamoDB
