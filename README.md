@@ -249,8 +249,11 @@ This repository includes a `.gitignore` file that prevents sensitive files from 
 - `variables.tf` - Variable definitions with safe defaults
 - `main.tf`, `provider.tf`, `outputs.tf` - Infrastructure code
 - `README.md` - Documentation
+- `.terraform.lock.hcl` - Dependency lock file (contains version info, no sensitive data)
 
 This approach allows you to safely share infrastructure code while keeping sensitive configuration local to your machine.
+
+**Note about .terraform.lock.hcl:** This file should be committed as it ensures all team members use the same provider versions, improving consistency and reproducibility. It contains only version numbers and checksums, no sensitive information.
 
 ### Phase 3: Deployment
 
