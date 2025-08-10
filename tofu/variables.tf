@@ -28,3 +28,9 @@ variable "allowed_ssh_cidr" {
   type        = string
   default     = "0.0.0.0/0"  # Insecure default - override in terraform.tfvars
 }
+
+variable "aws_profile" {
+  description = "AWS CLI profile to use"
+  type        = string
+  default     = "default"
+}

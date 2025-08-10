@@ -257,7 +257,15 @@ This approach allows you to safely share infrastructure code while keeping sensi
 
 ### Phase 3: Deployment
 
-1. **Initialize OpenTofu**
+1. **Configure AWS Authentication**
+
+    Before running OpenTofu commands, you need to authenticate with AWS. Since you're using SSO, run:
+
+    ```bash
+    aws sso login --profile <sso profile>
+    ```
+
+2. **Initialize OpenTofu**
 
     Navigate to the `tofu` directory and initialize:
 
@@ -268,7 +276,7 @@ This approach allows you to safely share infrastructure code while keeping sensi
 
     This downloads required providers and modules.
 
-2. **Plan Deployment**
+3. **Plan Deployment**
 
     Preview what will be created:
 
@@ -276,7 +284,29 @@ This approach allows you to safely share infrastructure code while keeping sensi
     tofu plan
     ```
 
-3. **Apply Configuration**
+    **Optional: Save the plan to a file**
+
+    You can save the execution plan to a file for later use:
+
+    ```bash
+    tofu plan -out=tfplan
+    ```
+
+    This creates a binary file called `tfplan` that contains the exact execution plan. Benefits:
+    - **Review before apply**: You can examine the plan file and apply it later
+    - **Consistency**: Ensures the same plan is applied even if configuration changes
+    - **CI/CD workflows**: Useful in automated deployment pipelines
+    - **Safety**: Prevents surprises between planning and applying
+
+    To apply a saved plan:
+
+    ```bash
+    tofu apply tfplan
+    ```
+
+    **Note:** Plan files are excluded from git (via .gitignore) as they can contain sensitive information.
+
+4. **Apply Configuration**
 
     Create the resources:
 
@@ -284,9 +314,15 @@ This approach allows you to safely share infrastructure code while keeping sensi
     tofu apply
     ```
 
-    Type `yes` when prompted to confirm.
+    Or apply a saved plan:
 
-4. **Connect to Your Instance**
+    ```bash
+    tofu apply tfplan
+    ```
+
+    Type `yes` when prompted to confirm (not needed when applying a saved plan).
+
+5. **Connect to Your Instance**
 
     After successful deployment, use the SSH command from the outputs:
 
@@ -311,5 +347,7 @@ Once you're comfortable with this basic setup, you can explore:
 - Adding more EC2 configuration options
 - Setting up autoscaling groups
 - Creating a proper networking setup with VPC and subnets
+- Implementing remote state storage in S3
+- Adding state locking with DynamoDB
 - Implementing remote state storage in S3
 - Adding state locking with DynamoDB
