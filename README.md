@@ -134,7 +134,10 @@ Create an SSH key pair that will allow you to securely connect to the EC2 instan
 
 #### **Generate SSH Key Pair**
 
+Navigate to the `tofu` directory and create the key pair there:
+
 ```bash
+cd tofu
 aws ec2 create-key-pair --key-name ec2-key --query 'KeyMaterial' --output text --profile <sso profile> > ec2-key.pem
 ```
 
@@ -350,7 +353,18 @@ This approach allows you to safely share infrastructure code while keeping sensi
 
     If you get a "Connection timed out" error when trying to SSH:
 
-    1. **Check your security group configuration** - Ensure your `terraform.tfvars` has the correct `allowed_ssh_cidr` value:
+    1. **Check file locations** - Both the SSH key file and OpenTofu files are now in the same directory:
+       - SSH key: `tofu/ec2-key.pem`
+       - OpenTofu files: `tofu/` directory
+
+       Make sure you're running the SSH command from the `tofu` directory where both the `.pem` file and state files are located:
+
+       ```bash
+       # From the tofu/ directory:
+       ssh -i ec2-key.pem ec2-user@<public_ip>
+       ```
+
+    2. **Check your security group configuration** - Ensure your `terraform.tfvars` has the correct `allowed_ssh_cidr` value:
 
        ```hcl
        allowed_ssh_cidr = "YOUR_PUBLIC_IP/32"
@@ -358,15 +372,28 @@ This approach allows you to safely share infrastructure code while keeping sensi
 
        Find your public IP at [whatismyipaddress.com](https://whatismyipaddress.com)
 
-    2. **Verify the instance is running** - Check the AWS console or run:
+    3. **Verify the instance is running** - Check the AWS console or run:
 
        ```bash
        aws ec2 describe-instances --instance-ids <instance-id> --profile <sso profile>
        ```
 
-    3. **Wait for instance initialization** - New instances can take a few minutes to fully boot and accept connections
+    4. **Check file permissions** - Ensure the SSH key has correct permissions:
 
-    4. **Update security group if needed** - If you need to change the allowed IP, update `terraform.tfvars` and run:
+       ```bash
+       ls -la *.pem
+       # Should show: -r-------- (chmod 400)
+       ```
+
+    5. **Verify key name matches** - Check that the key name in `terraform.tfvars` matches what was created:
+
+       ```bash
+       aws ec2 describe-key-pairs --profile <sso profile>
+       ```
+
+    6. **Wait for instance initialization** - New instances can take a few minutes to fully boot and accept connections
+
+    7. **Update security group if needed** - If you need to change the allowed IP, update `terraform.tfvars` and run:
 
        ```bash
        tofu plan
@@ -388,13 +415,12 @@ Type `yes` when prompted to confirm.
 If you need to delete SSH keys due to security concerns or want to completely clean up:
 
 ```bash
+# From the tofu/ directory:
 # Delete the key pair from AWS
 aws ec2 delete-key-pair --key-name ec2-key --profile <sso profile>
 
 # Delete local SSH key files
 rm ec2-key.pem
-# or if you created a new secure key:
-rm secure-ec2-key.pem
 ```
 
 **Note:** Only run these commands if you're certain you no longer need the SSH keys. If you accidentally exposed your private key (e.g., committed it to version control), you should immediately delete and recreate your keys for security.
@@ -409,4 +435,5 @@ Once you're comfortable with this basic setup, you can explore:
 - Implementing remote state storage in S3
 - Adding state locking with DynamoDB
 - Implementing remote state storage in S3
+- Adding state locking with DynamoDB
 - Adding state locking with DynamoDB
