@@ -168,7 +168,14 @@ OpenTofu roadmap to get an EC2 instance running:
 
 2. **Create Project Structure**
 
-    Create these files in your project directory:
+    Create a subdirectory called `tofu` to keep your configuration files organized:
+
+    ```bash
+    mkdir tofu
+    cd tofu
+    ```
+
+    Inside this directory, create these files:
     - `provider.tf` - AWS provider configuration
     - `main.tf` - EC2 instance definition
     - `variables.tf` - Customizable parameters
@@ -187,7 +194,7 @@ OpenTofu roadmap to get an EC2 instance running:
 
 3. **Variables (variables.tf)**
 
-    Defines input variables that make your configuration flexible and reusable. This file declares variables like region, AMI ID, instance type, and SSH key name, allowing you to customize your deployment without changing the core resource definitions.
+    Defines input variables that make your configuration flexible and reusable. This file declares variables like region, AMI ID, instance type, and SSH key name, allowing you to customize your deployment without changing the core resource definitions. **This file is committed to the repository** and contains safe default values.
 
 4. **Outputs (outputs.tf)**
 
@@ -195,17 +202,51 @@ OpenTofu roadmap to get an EC2 instance running:
 
 5. **Custom Values (terraform.tfvars)**
 
-    Contains the specific values for variables defined in variables.tf. This is where you set your preferred region, instance size, and other parameters. Keeping these values separate from your resource definitions allows for easier customization.
+    Contains the specific values for variables defined in variables.tf. This is where you set your preferred region, instance size, SSH key name, and most importantly, your actual public IP address for secure SSH access. **This file is NOT committed to the repository** (excluded by .gitignore) because it contains personalized and potentially sensitive information like your public IP address. You should customize the values in this file to match your specific requirements and security needs.
+
+**Important**: The `terraform.tfvars` file should contain different values from the defaults in `variables.tf`. For example:
+
+- `variables.tf` might have a generic AMI ID and open SSH access (`0.0.0.0/0`)
+- `terraform.tfvars` should have the correct AMI for your chosen region and your actual public IP (`x.x.x.x/32`) for secure SSH access
+
+### Security: .gitignore Configuration
+
+This repository includes a `.gitignore` file that prevents sensitive files from being committed to version control. This is crucial for security when working with infrastructure-as-code tools like OpenTofu.
+
+**Files excluded from the repository:**
+
+- `*.tfvars` - Contains your personal configuration values including IP addresses
+- `*.tfstate*` - State files that contain all resource details and can include sensitive data
+- `*.pem`, `*.key` - SSH private keys
+- `.terraform/` - Provider binaries and cached modules
+- `*.tfplan` - Plan files that may contain sensitive output
+
+**Why this matters:**
+
+- **Security**: Prevents accidental exposure of your public IP, SSH keys, or AWS resource details
+- **Privacy**: Keeps your personal configuration separate from the shared codebase
+- **Best Practice**: Follows standard Terraform/OpenTofu security guidelines
+
+**What gets committed:**
+
+- `variables.tf` - Variable definitions with safe defaults
+- `main.tf`, `provider.tf`, `outputs.tf` - Infrastructure code
+- `README.md` - Documentation
+
+This approach allows you to safely share infrastructure code while keeping sensitive configuration local to your machine.
 
 ### Phase 3: Deployment
 
 1. **Initialize OpenTofu**
 
-    This downloads required providers and modules:
+    Navigate to the `tofu` directory and initialize:
 
     ```bash
+    cd tofu
     tofu init
     ```
+
+    This downloads required providers and modules.
 
 2. **Plan Deployment**
 
