@@ -353,6 +353,36 @@ This approach allows you to safely share infrastructure code while keeping sensi
 
     If you get a "Connection timed out" error when trying to SSH:
 
+    1. **Check for SSH key format issues** - If you get "load pubkey: invalid format", this is often just a warning and not a failure. The connection may still work:
+
+       ```bash
+       # This warning is usually harmless, if you see the host authenticity prompt,
+       # it means SSH is connecting successfully. Type 'yes' to continue.
+
+       # If you want to suppress the warning:
+       ssh -i ec2-key.pem -o IdentitiesOnly=yes ec2-user@<public_ip>
+
+       # Or check if the key file is corrupted:
+       file ec2-key.pem  # Should show "PEM RSA private key"
+       ```
+
+       **Host authenticity prompt**: When you see "The authenticity of host... can't be established", type `yes` to accept and continue. This is normal for first-time connections.
+
+    **Disconnecting from SSH:**
+
+    Once you're connected to your EC2 instance, you can disconnect using:
+
+    ```bash
+    # Method 1: Type exit command
+    exit
+
+    # Method 2: Use keyboard shortcut
+    # Press Ctrl+D
+
+    # Method 3: If session is unresponsive
+    # Press Enter, then type ~. (tilde followed by period)
+    ```
+
     1. **Check file locations** - Both the SSH key file and OpenTofu files are now in the same directory:
        - SSH key: `tofu/ec2-key.pem`
        - OpenTofu files: `tofu/` directory
@@ -383,6 +413,10 @@ This approach allows you to safely share infrastructure code while keeping sensi
        ```bash
        ls -la *.pem
        # Should show: -r-------- (chmod 400)
+
+       # Also verify the file format:
+       file ec2-key.pem
+       # Should show: "PEM RSA private key" or similar
        ```
 
     5. **Verify key name matches** - Check that the key name in `terraform.tfvars` matches what was created:
@@ -410,7 +444,7 @@ tofu destroy
 
 Type `yes` when prompted to confirm.
 
-**Optional: Complete cleanup (if you want to start fresh)**
+#### **Optional: Complete cleanup (if you want to start fresh)**
 
 If you need to delete SSH keys due to security concerns or want to completely clean up:
 
