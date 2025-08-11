@@ -120,13 +120,7 @@ The CLI will open a browser for you to authenticate.
 aws sso login --profile <sso profile>
 ```
 
-Even if I granted STS permissions in the json above, I was not able to get the following to work even after successful SSO CLI login
-
-```bash
-aws sts get-caller-identity --profile <sso profile>
-```
-
-- Create or use existing Access Key ID and Secret Access Key
+**Note:** The `aws sts get-caller-identity` command may not work with SSO profiles due to permission restrictions, but this doesn't affect OpenTofu functionality. As long as `aws sso login` succeeds, you can proceed.
 
 ### Step 8: SSH Credentials
 
@@ -134,9 +128,10 @@ Create an SSH key pair that will allow you to securely connect to the EC2 instan
 
 #### **Generate SSH Key Pair**
 
-Navigate to the `tofu` directory and create the key pair there:
+**First, navigate to the `tofu` directory** (create it if it doesn't exist yet):
 
 ```bash
+mkdir -p tofu
 cd tofu
 aws ec2 create-key-pair --key-name ec2-key --query 'KeyMaterial' --output text --profile <sso profile> > ec2-key.pem
 ```
@@ -178,7 +173,7 @@ OpenTofu roadmap to get an EC2 instance running:
 ### Phase 1: Local Setup
 
 1. **Install OpenTofu** on your Windows machine
-    [Guide](https://opentofu.org/docs/intro/install/windows/). Not sure if adding it to PATH helped or not
+    [Installation Guide](https://opentofu.org/docs/intro/install/windows/)
 
     ```powershell
     winget install --exact --id=OpenTofu.Tofu
@@ -192,7 +187,7 @@ OpenTofu roadmap to get an EC2 instance running:
 
 2. **Create Project Structure**
 
-    Create a subdirectory called `tofu` to keep your configuration files organized:
+    **If you haven't already**, create a subdirectory called `tofu` to keep your configuration files organized:
 
     ```bash
     mkdir tofu
@@ -232,8 +227,8 @@ OpenTofu roadmap to get an EC2 instance running:
 
 **Important**: The `terraform.tfvars` file should contain different values from the defaults in `variables.tf`. For example:
 
-- `variables.tf` might have a generic AMI ID and open SSH access (`0.0.0.0/0`)
-- `terraform.tfvars` should have the correct AMI for your chosen region and your actual public IP (`x.x.x.x/32`) for secure SSH access
+- `variables.tf` has safe defaults with a generic AMI ID and open SSH access (`0.0.0.0/0`)
+- `terraform.tfvars` should have the correct AMI for your region and your actual public IP (`x.x.x.x/32`) for security
 
 ### Security: .gitignore Configuration
 
@@ -241,11 +236,11 @@ This repository includes a `.gitignore` file that prevents sensitive files from 
 
 **Files excluded from the repository:**
 
-- `*.tfvars` - Contains your personal configuration values including IP addresses
-- `*.tfstate*` - State files that contain all resource details and can include sensitive data
+- `*.tfvars` - Contains personal configuration values including IP addresses
+- `*.tfstate*` - State files that contain all resource details and may include sensitive data
 - `*.pem`, `*.key` - SSH private keys
 - `.terraform/` - Provider binaries and cached modules
-- `*.tfplan` - Plan files that may contain sensitive output
+- `*.tfplan`, `tfplan` - Plan files that may contain sensitive output
 
 **Why this matters:**
 
@@ -268,11 +263,13 @@ This approach allows you to safely share infrastructure code while keeping sensi
 
 1. **Configure AWS Authentication**
 
-    Before running OpenTofu commands, you need to authenticate with AWS. Since you're using SSO, run:
+    Before running OpenTofu commands, authenticate with AWS using your SSO profile:
 
     ```bash
     aws sso login --profile <sso profile>
     ```
+
+    **Note:** Replace `<sso profile>` with your actual SSO profile name throughout this guide.
 
 2. **Initialize OpenTofu**
 
@@ -333,7 +330,13 @@ This approach allows you to safely share infrastructure code while keeping sensi
 
 5. **Connect to Your Instance**
 
-    After successful deployment, use the SSH command from the outputs:
+    After successful deployment, get the SSH command from the outputs:
+
+    ```bash
+    tofu output ssh_command
+    ```
+
+    Then run the displayed command, or manually use:
 
     ```bash
     ssh -i ec2-key.pem ec2-user@<public_ip>
@@ -353,16 +356,16 @@ This approach allows you to safely share infrastructure code while keeping sensi
 
     If you get a "Connection timed out" error when trying to SSH:
 
-    1. **Check for SSH key format issues** - If you get "load pubkey: invalid format", this is often just a warning and not a failure. The connection may still work:
+    1. **Check for SSH key format issues** - If you get "load pubkey: invalid format", this is usually just a warning, not a failure:
 
        ```bash
-       # This warning is usually harmless, if you see the host authenticity prompt,
-       # it means SSH is connecting successfully. Type 'yes' to continue.
+       # The warning is harmless if you see the host authenticity prompt afterward
+       # Type 'yes' to accept the host key and continue connecting
 
-       # If you want to suppress the warning:
+       # To suppress the warning, use:
        ssh -i ec2-key.pem -o IdentitiesOnly=yes ec2-user@<public_ip>
 
-       # Or check if the key file is corrupted:
+       # Verify the key file format:
        file ec2-key.pem  # Should show "PEM RSA private key"
        ```
 
@@ -463,11 +466,20 @@ rm ec2-key.pem
 
 Once you're comfortable with this basic setup, you can explore:
 
-- Adding more EC2 configuration options
-- Setting up autoscaling groups
-- Creating a proper networking setup with VPC and subnets
-- Implementing remote state storage in S3
-- Adding state locking with DynamoDB
-- Implementing remote state storage in S3
-- Adding state locking with DynamoDB
-- Adding state locking with DynamoDB
+- **Infrastructure improvements:**
+
+- Setting up a proper VPC with public/private subnets
+- Adding an Application Load Balancer
+- Implementing auto-scaling groups
+
+- **OpenTofu best practices:**
+
+- Remote state storage in S3 with state locking via DynamoDB
+- Organizing code with modules
+- Using workspaces for multiple environments
+
+- **Security enhancements:**
+
+- Using AWS Systems Manager Session Manager instead of SSH
+- Implementing least-privilege IAM policies
+- Adding monitoring and logging with CloudWatch
