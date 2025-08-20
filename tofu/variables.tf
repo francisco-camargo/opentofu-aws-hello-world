@@ -24,9 +24,14 @@ variable "key_name" {
 }
 
 variable "allowed_ssh_cidr" {
-  description = "CIDR block allowed for SSH access (use your public IP/32 for security)"
+  description = "CIDR block allowed for SSH access (REQUIRED: set to your public IP/32 for security)"
   type        = string
-  default     = "0.0.0.0/0"  # Insecure default - override in terraform.tfvars
+  # No default - forces explicit setting of your IP address
+
+  validation {
+    condition     = can(cidrhost(var.allowed_ssh_cidr, 0))
+    error_message = "The allowed_ssh_cidr value must be a valid CIDR block."
+  }
 }
 
 variable "aws_profile" {
